@@ -1,9 +1,10 @@
 import { Box, Button, Dialog } from '@interest-protocol/ui-kit';
+import { useSuiClientContext } from '@mysten/dapp-kit';
 import { FC } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
-import { useGetExplorerUrl } from '@/hooks/use-get-explorer-url';
+import { Network } from '@/constants';
 import { useModal } from '@/hooks/use-modal';
 import { TimedSuiTransactionBlockResponse } from '@/interface';
 import { showTXSuccessToast } from '@/utils';
@@ -13,7 +14,7 @@ import useCreateLink from './send-button.hooks';
 
 const SendBulkFormButton: FC = () => {
   const createLink = useCreateLink();
-  const getExplorerUrl = useGetExplorerUrl();
+  const { network } = useSuiClientContext();
   const { setModal, handleClose } = useModal();
   const { control, setValue } = useFormContext<ISendBulkForm>();
   const object = useWatch({ control, name: 'object' });
@@ -23,7 +24,7 @@ const SendBulkFormButton: FC = () => {
     tx: TimedSuiTransactionBlockResponse,
     links: ReadonlyArray<string>
   ) => {
-    showTXSuccessToast(tx, getExplorerUrl, 'Link created successfully');
+    showTXSuccessToast(tx, network as Network, 'Link created successfully');
 
     setValue('links', links);
   };

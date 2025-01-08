@@ -1,15 +1,15 @@
 import { Typography } from '@interest-protocol/ui-kit';
 import toast from 'react-hot-toast';
 
-import { ExplorerMode } from '@/constants';
+import { EXPLORER_URL, Network } from '@/constants';
 import { TimedSuiTransactionBlockResponse } from '@/interface';
 
 export const showTXSuccessToast = (
   tx: TimedSuiTransactionBlockResponse,
-  getExplorerUrl: (value: string, mode: ExplorerMode) => string,
+  network: Network,
   message: string
 ): void => {
-  const explorerLink = getExplorerUrl(tx.digest, ExplorerMode.Transaction);
+  const explorerLink = `${EXPLORER_URL[network]}/tx/${tx.digest}`;
 
   toast.success(
     <a target="_blank" rel="noreferrer nofollow" href={explorerLink}>

@@ -9,9 +9,8 @@ import { v4 } from 'uuid';
 
 import { TokenIcon } from '@/components';
 import LinearChart from '@/components/linear-chart';
-import { ExplorerMode, LOCAL_STORAGE_VERSION } from '@/constants';
+import { EXPLORER_URL, LOCAL_STORAGE_VERSION } from '@/constants';
 import { MAX_U64 } from '@/constants/dca';
-import { useGetExplorerUrl } from '@/hooks/use-get-explorer-url';
 import { useNetwork } from '@/hooks/use-network';
 import { FixedPointMath } from '@/lib';
 import { EyeSVG, IncineratorNoAssetsSVG, LinkSVG } from '@/svg';
@@ -21,7 +20,6 @@ import { useDCAState } from '../dca-orders-manager';
 
 const DCAOrderDetailsOrders: FC = () => {
   const network = useNetwork();
-  const getExplorerUrl = useGetExplorerUrl();
   const [isOpen, setOpen] = useLocalStorage<boolean>(
     `${LOCAL_STORAGE_VERSION}-sui-coins-dca-chart`,
     true
@@ -394,9 +392,7 @@ const DCAOrderDetailsOrders: FC = () => {
                     {new Date(timestampMs).toLocaleString()}
                   </Typography>
                   <Box>
-                    <Link
-                      href={getExplorerUrl(digest, ExplorerMode.Transaction)}
-                    >
+                    <Link href={`${EXPLORER_URL[network]}/tx/${digest}`}>
                       <Button
                         isIcon
                         variant="text"

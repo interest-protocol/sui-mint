@@ -1,38 +1,10 @@
 import { Box, ToggleButton, Typography } from '@interest-protocol/ui-kit';
 import { FC } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { FixedPointMath } from '@/lib';
 
 import { IAirdropForm } from '../../../airdrop.types';
-
-const PreviewTheAmount: FC = () => {
-  const { control, getValues } = useFormContext();
-  const [amount, amountForAll] = useWatch({
-    control,
-    name: ['commonAmount', 'amountForAll'],
-  });
-
-  return (
-    <Typography
-      p="s"
-      size="medium"
-      variant="label"
-      border="1px solid"
-      borderRadius="2xs"
-      bg="warningContainer"
-      color="onWarningContainer"
-    >
-      Amount per wallet:{' '}
-      {amount
-        ? +(
-            amount / (amountForAll ? getValues('airdropList').length : 1)
-          ).toFixed(getValues('token.decimals'))
-        : 0}{' '}
-      {getValues('token.symbol')}
-    </Typography>
-  );
-};
 
 const AirdropCommonAmountToggle: FC = () => {
   const { getValues, setValue } = useFormContext<IAirdropForm>();
@@ -49,7 +21,7 @@ const AirdropCommonAmountToggle: FC = () => {
     >
       <Box display="flex" justifyContent="space-between">
         <Typography variant="title" size="medium" fontWeight="500">
-          Split the amount
+          Amount for all
         </Typography>
         <ToggleButton
           name="amountForAll"
@@ -64,7 +36,7 @@ const AirdropCommonAmountToggle: FC = () => {
                   getValues('token.decimals')
                 )
                   .div(
-                    !amountForAll ? 1 : (getValues('airdropList')?.length ?? 1)
+                    !amountForAll ? 1 : getValues('airdropList')?.length ?? 1
                   )
                   .decimalPlaces(0)
                   .toString(),
@@ -77,9 +49,9 @@ const AirdropCommonAmountToggle: FC = () => {
         />
       </Box>
       <Typography variant="body" size="small" color="outline">
-        Activate this option to divide the amount per wallet.
+        Activate this option to send the divide the amount to for all the
+        wallets.
       </Typography>
-      <PreviewTheAmount />
     </Box>
   );
 };

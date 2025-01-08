@@ -30,7 +30,7 @@ const ItemWrapper: FC<PropsWithChildren<ItemWrapperProps>> = ({
       alignItems="center"
       variants={itemVariants}
       initial={itemVariants.closed}
-      justifyContent="flex-start"
+      justifyContent="space-between"
       nHover={{
         bg: disabled ? 'unset' : dark ? '#FFFFFF1A' : '#86868614',
       }}

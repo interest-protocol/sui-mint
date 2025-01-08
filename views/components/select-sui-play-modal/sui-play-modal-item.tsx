@@ -78,7 +78,7 @@ const SuiPlayModalItem: FC<SuiPlayModalItemProps> = ({
       >
         <Box gap="xs" display="flex" alignItems="center">
           <Typography variant="body" size="small">
-            {holders.length} addresses
+            {holders} addresses
           </Typography>
           <Button
             p="0"
@@ -91,7 +91,7 @@ const SuiPlayModalItem: FC<SuiPlayModalItemProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               setDownloading(true);
-              getSuiPlayHoldersJSON(tier, holders, updatedAt!).then(() =>
+              getSuiPlayHoldersJSON(tier, updatedAt!).then(() =>
                 setDownloading(false)
               );
             }}

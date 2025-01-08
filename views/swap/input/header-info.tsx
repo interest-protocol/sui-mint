@@ -11,18 +11,14 @@ const HeaderInfo: FC<InputProps> = ({ label }) => {
   const symbol = useWatch({ control, name: `${label}.symbol` });
 
   return (
-    <Box display="flex" alignItems="center">
-      <Typography display="flex" variant="label" size="medium" fontSize="s">
+    <Box display="flex" justifyContent="space-between">
+      <Typography variant="label" size="medium" fontSize="s">
         {label == 'from' ? 'Sell' : 'BUY'}
         <Typography
           as="span"
           size="small"
-          fontSize="s"
           variant="label"
-          maxWidth="15ch"
-          overflowX="hidden"
-          whiteSpace="nowrap"
-          textOverflow="ellipsis"
+          fontSize="s"
           display={['inline-block', 'none']}
         >
           : {symbol}

@@ -22,9 +22,10 @@ import {
   CoinObjectData,
   ObjectData,
 } from '@/components/web3-manager/all-objects-manager/all-objects.types';
+import { Network } from '@/constants';
 import { useBlocklist } from '@/hooks/use-blocklist';
-import { useGetExplorerUrl } from '@/hooks/use-get-explorer-url';
 import { useModal } from '@/hooks/use-modal';
+import { useNetwork } from '@/hooks/use-network';
 import { useStrictTokens } from '@/hooks/use-strict-tokens';
 import { useVerifiedDeFiNfts } from '@/hooks/use-verified-defi-nfts';
 import { useWeb3 } from '@/hooks/use-web3';
@@ -206,9 +207,9 @@ export const useBurn = () => {
 
 export const useOnBurn = () => {
   const burn = useBurn();
+  const network = useNetwork();
   const { setDelay, mutate } = useWeb3();
   const { colors } = useTheme() as Theme;
-  const getExplorerUrl = useGetExplorerUrl();
   const { data: tokens } = useStrictTokens();
   const { setModal, handleClose } = useModal();
   const { setValue } = useFormContext<IncineratorForm>();
@@ -227,7 +228,7 @@ export const useOnBurn = () => {
 
   const onSuccess =
     (message: string) => (tx: TimedSuiTransactionBlockResponse) => {
-      showTXSuccessToast(tx, getExplorerUrl, message);
+      showTXSuccessToast(tx, network as Network, message);
       mutate();
     };
 

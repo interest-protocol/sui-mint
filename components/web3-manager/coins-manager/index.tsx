@@ -3,7 +3,7 @@ import { CoinBalance } from '@mysten/sui/dist/cjs/client';
 import { normalizeStructTag, SUI_TYPE_ARG } from '@mysten/sui/utils';
 import BigNumber from 'bignumber.js';
 import { isEmpty } from 'ramda';
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import useSWR from 'swr';
 
 import { Network } from '@/constants';
@@ -11,7 +11,7 @@ import { METADATA } from '@/constants/metadata';
 import { useCoins } from '@/hooks/use-coins';
 import { useNetwork } from '@/hooks/use-network';
 import { CoinMetadataWithType } from '@/interface';
-import { chunk, fetchCoinMetadata, isSui, makeSWRKey } from '@/utils';
+import { fetchCoinMetadata, isSui, makeSWRKey } from '@/utils';
 
 import { CoinsMap } from './coins-manager.types';
 
@@ -21,6 +21,10 @@ const CoinsManager: FC = () => {
   const currentAccount = useCurrentAccount();
   const { id, delay, coinsMap, updateCoins, updateLoading, updateError } =
     useCoins();
+
+  useEffect(() => {
+    updateCoins({} as CoinsMap);
+  }, [currentAccount]);
 
   useSWR(
     makeSWRKey([id, network, currentAccount?.address], CoinsManager.name),
@@ -52,29 +56,19 @@ const CoinsManager: FC = () => {
         ];
 
         const dbCoinsMetadata: Record<string, CoinMetadataWithType> =
-          await Promise.all(
-            chunk(coinsType, 50).map((types) =>
-              fetchCoinMetadata({ network, types }).then((data) =>
-                data.reduce((acc, item) => {
-                  const override =
-                    METADATA[network as Network][
-                      normalizeStructTag(item.type)
-                    ] || item;
-                  return {
-                    ...acc,
-                    [normalizeStructTag(override.type)]: {
-                      ...override,
-                      type: normalizeStructTag(override.type),
-                    },
-                  };
-                }, {})
-              )
-            )
-          ).then((data: ReadonlyArray<Record<string, CoinMetadataWithType>>) =>
-            data.reduce(
-              (acc, metadataMap) => ({ ...acc, ...metadataMap }),
-              {} as Record<string, CoinMetadataWithType>
-            )
+          await fetchCoinMetadata({ network, types: coinsType }).then((data) =>
+            data.reduce((acc, item) => {
+              const override =
+                METADATA[network as Network][normalizeStructTag(item.type)] ||
+                item;
+              return {
+                ...acc,
+                [normalizeStructTag(override.type)]: {
+                  ...override,
+                  type: normalizeStructTag(override.type),
+                },
+              };
+            }, {})
           );
 
         const filteredCoinsRaw = coinsRaw.filter(

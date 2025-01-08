@@ -4,15 +4,14 @@ import { FC } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { SUIPLAY_SOULBOUND } from '@/constants';
+import { SUIPLAY_HOLDERS } from '@/constants/nft';
 import { useModal } from '@/hooks/use-modal';
-import { useSuiPlayHolders } from '@/hooks/use-sui-play-holders';
 import { ChevronRightSVG } from '@/svg';
 import SelectSuiPlayModal from '@/views/components/select-sui-play-modal';
 
 import { IAirdropForm } from '../../airdrop.types';
 
 const AirdropSuiPlayHoldersMethod: FC = () => {
-  const { data } = useSuiPlayHolders();
   const { setModal, handleClose } = useModal();
 
   const { control, setValue, getValues } = useFormContext<IAirdropForm>();
@@ -22,11 +21,8 @@ const AirdropSuiPlayHoldersMethod: FC = () => {
   const onSelectSuiPlay = async (
     tier: 'The Mythics' | 'The Exalted' | 'All'
   ) => {
-    if (!data) return;
-
     setValue('tier', tier);
-
-    const holders = data.holders[tier];
+    const holders = SUIPLAY_HOLDERS[tier];
 
     const airdropList = holders.map((address) => ({
       address,

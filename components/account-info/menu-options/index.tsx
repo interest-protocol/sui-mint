@@ -2,6 +2,7 @@ import { Box, Motion, Typography } from '@interest-protocol/ui-kit';
 import {
   useAccounts,
   useCurrentAccount,
+  useCurrentWallet,
   useSuiClientContext,
   useSwitchAccount,
 } from '@mysten/dapp-kit';
@@ -80,9 +81,10 @@ const MenuOptions: FC<MenuOptionsProps> = ({
   handleDisconnect,
 }) => {
   const { asPath, push } = useRouter();
+
   const { network } = useSuiClientContext();
 
-  const currentAccount = useCurrentAccount();
+  const { isConnected } = useCurrentWallet();
   const [submenu, setSubmenu] = useState<ReactNode>(null);
 
   const closeSubmenu = () => setSubmenu(null);
@@ -115,7 +117,7 @@ const MenuOptions: FC<MenuOptionsProps> = ({
     >
       {submenu ?? (
         <>
-          {currentAccount && (
+          {isConnected && (
             <OptionItem withSubmenu onClick={openAccountSubmenu}>
               <Avatar withNameOrAddress />
             </OptionItem>
@@ -130,7 +132,7 @@ const MenuOptions: FC<MenuOptionsProps> = ({
             </OptionItem>
           ))}
           <OptionItem disabled>Settings</OptionItem>
-          {currentAccount ? (
+          {isConnected ? (
             <>
               <OptionItem
                 mobileOnly

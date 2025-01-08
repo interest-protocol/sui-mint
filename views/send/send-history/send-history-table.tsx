@@ -7,7 +7,11 @@ import {
   TooltipWrapper,
   Typography,
 } from '@interest-protocol/ui-kit';
-import { useCurrentAccount, useSuiClient } from '@mysten/dapp-kit';
+import {
+  useCurrentAccount,
+  useSuiClient,
+  useSuiClientContext,
+} from '@mysten/dapp-kit';
 import type { SuiObjectRef } from '@mysten/sui/client';
 import { SUI_TYPE_ARG } from '@mysten/sui/utils';
 import type { ZkSendLink } from '@mysten/zksend';
@@ -17,8 +21,7 @@ import { FC, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { v4 } from 'uuid';
 
-import { ExplorerMode, Routes, RoutesEnum } from '@/constants';
-import { useGetExplorerUrl } from '@/hooks/use-get-explorer-url';
+import { EXPLORER_URL, Network, Routes, RoutesEnum } from '@/constants';
 import { useModal } from '@/hooks/use-modal';
 import { TimedSuiTransactionBlockResponse } from '@/interface';
 import {
@@ -43,8 +46,8 @@ const SendHistoryTable: FC = () => {
   const { push } = useRouter();
   const suiClient = useSuiClient();
   const reclaimLink = useReclaimLink();
+  const { network } = useSuiClientContext();
   const regenerateLink = useRegenerateLink();
-  const getExplorerUrl = useGetExplorerUrl();
   const { setModal, handleClose } = useModal();
   const [currentCursor, setCursor] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -82,7 +85,7 @@ const SendHistoryTable: FC = () => {
 
   const onSuccessReclaim = (tx: TimedSuiTransactionBlockResponse) => {
     if (!currentAccount) return;
-    showTXSuccessToast(tx, getExplorerUrl, 'Link reclaimed successfully!');
+    showTXSuccessToast(tx, network as Network, 'Link reclaimed successfully!');
 
     setGasObjects(findNextGasCoin(tx, currentAccount.address));
 
@@ -93,7 +96,11 @@ const SendHistoryTable: FC = () => {
     tx: TimedSuiTransactionBlockResponse,
     url: string
   ) => {
-    showTXSuccessToast(tx, getExplorerUrl, 'Link regenerated successfully!');
+    showTXSuccessToast(
+      tx,
+      network as Network,
+      'Link regenerated successfully!'
+    );
 
     push(`${Routes[RoutesEnum.SendLink]}#${url.split('#')[1]}`);
   };
@@ -104,7 +111,7 @@ const SendHistoryTable: FC = () => {
     );
 
   const gotoExplorer = (digest: string) =>
-    window.open(getExplorerUrl(digest, ExplorerMode.Transaction));
+    window.open(`${EXPLORER_URL[network as Network]}/tx/${digest}`);
 
   const handleReclaimLink = async (link: ZkSendLink) => {
     const gasCoins = gasObjects.length

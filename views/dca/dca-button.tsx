@@ -11,13 +11,12 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import invariant from 'tiny-invariant';
 import { useReadLocalStorage } from 'usehooks-ts';
 
-import { ExplorerMode } from '@/constants';
+import { EXPLORER_URL, Network } from '@/constants';
 import { DELEGATEE, SENTINEL_API_URI } from '@/constants/dca';
 import { DCA_FEE_PERCENTAGE } from '@/constants/fees';
 import { useFeeFreeTokens } from '@/hooks/use-dca';
 import useDcaSdk from '@/hooks/use-dca-sdk';
 import { useDialog } from '@/hooks/use-dialog';
-import { useGetExplorerUrl } from '@/hooks/use-get-explorer-url';
 import { useNetwork } from '@/hooks/use-network';
 import { FixedPointMath } from '@/lib';
 import {
@@ -38,12 +37,11 @@ const DCAButton: FC = () => {
   const dcaSdk = useDcaSdk();
   const network = useNetwork();
   const suiClient = useSuiClient();
+  const { data, isLoading, error } = useFeeFreeTokens();
   const formDCA = useFormContext<DCAForm>();
   const currentAccount = useCurrentAccount();
-  const getExplorerUrl = useGetExplorerUrl();
   const { dialog, handleClose } = useDialog();
   const signTransaction = useSignTransaction();
-  const { data, isLoading, error } = useFeeFreeTokens();
   const aggregator =
     useReadLocalStorage<Aggregator>(
       `${LOCAL_STORAGE_TOP_KEY}-suicoins-dca-aggregator`
@@ -155,7 +153,7 @@ const DCAButton: FC = () => {
 
       formDCA.setValue(
         'explorerLink',
-        getExplorerUrl(txResult.digest, ExplorerMode.Transaction)
+        `${EXPLORER_URL[network as Network]}/tx/${txResult.digest}`
       );
     } finally {
       resetInput();

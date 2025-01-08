@@ -1,9 +1,4 @@
-import {
-  INCINERATOR_EXTERNAL_LINK,
-  Network,
-  Routes,
-  RoutesEnum,
-} from '@/constants';
+import { Network, Routes, RoutesEnum } from '@/constants';
 import {
   AirdropSVG,
   CirclePlusSVG,
@@ -51,7 +46,6 @@ export const SIDEBAR_ITEMS: ReadonlyArray<IMenuItem> = [
     disabled: false,
     name: 'incinerator',
     path: Routes[RoutesEnum.Incinerator],
-    suiWalletLink: INCINERATOR_EXTERNAL_LINK,
     networks: [Network.MAINNET, Network.TESTNET],
   },
   {

@@ -61,9 +61,9 @@ const SelectObject: FC<SendFormSelectObjectProps> = ({ index }) => {
     );
 
   const displayName = object?.display
-    ? ((object.display as Record<string, string>).name ??
+    ? (object.display as Record<string, string>).name ??
       object.display.symbol ??
-      type)
+      type
     : type;
 
   const url = (object?.display as Record<string, string>)?.image_url || '';
@@ -102,8 +102,8 @@ const SelectObject: FC<SendFormSelectObjectProps> = ({ index }) => {
         <Typography
           size="large"
           variant="label"
-          pr={['0', 'xs']}
           maxWidth="12ch"
+          pr={['0', 'xs']}
           color="onSurface"
           overflow="hidden"
           whiteSpace="nowrap"

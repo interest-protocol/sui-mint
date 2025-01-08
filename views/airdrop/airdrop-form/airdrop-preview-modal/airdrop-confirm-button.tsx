@@ -3,22 +3,20 @@ import {
   useCurrentAccount,
   useSignTransaction,
   useSuiClient,
+  useSuiClientContext,
 } from '@mysten/dapp-kit';
 import { SuiObjectChangeCreated } from '@mysten/sui/client';
 import { Transaction } from '@mysten/sui/transactions';
 import { SUI_TYPE_ARG } from '@mysten/sui/utils';
 import BigNumber from 'bignumber.js';
 import { useRouter } from 'next/router';
-import { path } from 'ramda';
 import { FC } from 'react';
 import { useFormContext } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 import { AIRDROP_SEND_CONTRACT, Network, TREASURY } from '@/constants';
 import { AIRDROP_SUI_FEE_PER_ADDRESS } from '@/constants/fees';
-import { useGetExplorerUrl } from '@/hooks/use-get-explorer-url';
 import { useModal } from '@/hooks/use-modal';
-import { useNetwork } from '@/hooks/use-network';
 import { useWeb3 } from '@/hooks/use-web3';
 import {
   getCoins,
@@ -38,23 +36,18 @@ import {
 } from '@/views/airdrop/airdrop-form/txb-utils';
 
 import { BATCH_SIZE } from '../../airdrop.constants';
-import {
-  AirdropConfirmButtonProps,
-  IAirdropForm,
-  ResultCoins,
-} from '../../airdrop.types';
+import { AirdropConfirmButtonProps, IAirdropForm } from '../../airdrop.types';
 
 const feeFree = JSON.parse(process.env.NEXT_PUBLIC_FEE_FREE ?? 'false');
 
 const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
   setIsProgressView,
 }) => {
-  const network = useNetwork();
   const { query } = useRouter();
   const { coinsMap } = useWeb3();
   const suiClient = useSuiClient();
   const { handleClose } = useModal();
-  const getExplorerUrl = useGetExplorerUrl();
+  const { network } = useSuiClientContext();
   const currentAccount = useCurrentAccount();
   const signTransaction = useSignTransaction();
   const { getValues, setValue } = useFormContext<IAirdropForm>();
@@ -108,45 +101,21 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
             showObjectChanges: true,
           },
         });
-
         const initTransferTxMS = Date.now();
 
         throwTXIfNotSuccessful(tx2, () => setValue('error', true));
 
         showTXSuccessToast(
           tx2,
-          getExplorerUrl,
+          network as Network,
           'Initial TX completed successfully'
         );
 
-        const coins =
+        const [gasCoin, spendCoin, feeCoin, ...gasCoins] =
           (tx2.objectChanges as Array<SuiObjectChangeCreated>)!.reduce(
             suiObjectReducer(currentAccount.address),
             []
           );
-
-        const coinsObject = await suiClient.multiGetObjects({
-          ids: coins.map(({ objectId }) => objectId),
-          options: { showContent: true },
-        });
-
-        const { gasCoin, spendCoin, feeCoin } = coinsObject.reduce(
-          (acc, curr, index) => {
-            const balance = path(
-              ['data', 'content', 'fields', 'balance'],
-              curr
-            );
-            return {
-              ...acc,
-              [balance === totalAmount.toString()
-                ? 'spendCoin'
-                : balance === feeAmount.toString()
-                  ? 'feeCoin'
-                  : 'gasCoin']: coins[index],
-            };
-          },
-          {} as ResultCoins
-        );
 
         await pauseUtilNextTx(initTransferTxMS);
 
@@ -164,7 +133,10 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
 
           tx.transferObjects([fee], tx.pure.address(TREASURY));
 
-          tx.setGasPayment([gasCoin]);
+          tx.setGasPayment([
+            gasCoin,
+            ...(!index ? gasCoins.splice(0, 250) : []),
+          ]);
 
           const tx2 = await sendAirdrop({
             tx,
@@ -203,8 +175,8 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
 
           showTXSuccessToast(
             tx2,
-            getExplorerUrl,
-            `Batch ${Number(index) + 1} was completed successfully`
+            network as Network,
+            `Patch ${Number(index) + 1} was completed successfully`
           );
 
           await pauseUtilNextTx(initAirdropTxMS);
@@ -250,7 +222,7 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
 
       showTXSuccessToast(
         tx2,
-        getExplorerUrl,
+        network as Network,
         'Initial TX completed successfully'
       );
 
@@ -260,26 +232,11 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
           firstCoin.coinObjectId
         );
 
-      const coins =
+      const [gasCoin, feeCoin, ...gasCoins] =
         (tx2.objectChanges as Array<SuiObjectChangeCreated>)!.reduce(
           suiObjectReducer(currentAccount.address),
           []
         );
-
-      const coinsObject = await suiClient.multiGetObjects({
-        ids: coins.map(({ objectId }) => objectId),
-        options: { showContent: true },
-      });
-
-      const { gasCoin, feeCoin } = coinsObject.reduce((acc, curr, index) => {
-        const balance = path(['data', 'content', 'fields', 'balance'], curr);
-
-        return {
-          ...acc,
-          [balance === feeAmount.toString() ? 'feeCoin' : 'gasCoin']:
-            coins[index],
-        };
-      }, {} as ResultCoins);
 
       await pauseUtilNextTx(initMergeAndSplitTxMS);
 
@@ -290,7 +247,7 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
 
         const fee = tx.splitCoins(tx.objectRef(feeCoin), [
           tx.pure.u64(
-            BigNumber(feePerAddress)
+            BigNumber(AIRDROP_SUI_FEE_PER_ADDRESS)
               .times(batch.length)
               .decimalPlaces(0)
               .toString()
@@ -311,7 +268,7 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
           version: nextGasVersion,
         };
 
-        tx.setGasPayment([gas]);
+        tx.setGasPayment([gas, ...(!index ? gasCoins.splice(0, 250) : [])]);
 
         const tx2 = await sendAirdrop({
           tx,
@@ -350,22 +307,18 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
 
         showTXSuccessToast(
           tx2,
-          getExplorerUrl,
-          `Batch ${Number(index) + 1} was completed successfully`
+          network as Network,
+          `Patch ${Number(index) + 1} was completed successfully`
         );
 
         setValue('done', [...getValues('done'), Number(index)]);
 
         await pauseUtilNextTx(initAirdropTxMS);
       }
-    } catch (e) {
+    } catch (e: any) {
       handleClose();
-      console.log({ e });
-
-      toast.error(
-        ((e as Error)?.message as string) ?? e ?? 'Something went wrong!'
-      );
-      if ((((e as Error)?.message as string) ?? e) === 'Rejected from user') {
+      toast.error((e?.message as string) ?? e ?? 'Something went wrong!');
+      if (((e?.message as string) ?? e) === 'Rejected from user') {
         setValue('error', true);
       }
     }
@@ -373,13 +326,12 @@ const AirdropConfirmButton: FC<AirdropConfirmButtonProps> = ({
 
   const airdropList = getValues('airdropList');
 
-  const airdropFee =
-    !airdropList || (feeFree && query['discount'] === 'free')
-      ? ZERO_BIG_NUMBER
-      : BigNumber(
-          AIRDROP_SUI_FEE_PER_ADDRESS *
-            (getValues('method') === 'suiPlay' ? 0.5 : 1)
-        ).times(airdropList.length);
+  const airdropFee = airdropList
+    ? BigNumber(
+        AIRDROP_SUI_FEE_PER_ADDRESS *
+          (getValues('method') === 'suiPlay' ? 0.5 : 1)
+      ).times(airdropList.length)
+    : ZERO_BIG_NUMBER;
 
   const disabled = airdropFee.gt(
     coinsMap[SUI_TYPE_ARG]?.balance ?? ZERO_BIG_NUMBER
